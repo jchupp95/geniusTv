@@ -17,13 +17,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtWebEngineCore import QWebEnginePage
+from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 
 
 CONFIG_FILE = Path("config.toml")
 
 
 class SinglePage(QWebEnginePage):
+    def __init__(self, profile, parent=None):
+        super().__init__(profile, parent)
+
     def createWindow(self, window_type):
         return self
 
@@ -48,6 +51,21 @@ class TV(QMainWindow):
 
         # Start on home
         self.stack.setCurrentWidget(self.home)
+
+        self.profile = QWebEngineProfile("TVBrowser", self)
+
+        storage_path = Path.home() / ".local" / "share" / "tv-shell"
+        cache_path = Path.home() / ".cache" / "tv-shell"
+
+        storage_path.mkdir(parents=True, exist_ok=True)
+        cache_path.mkdir(parents=True, exist_ok=True)
+
+        self.profile.setPersistentStoragePath(str(storage_path))
+        self.profile.setCachePath(str(cache_path))
+
+        self.profile.setPersistentCookiesPolicy(
+            QWebEngineProfile.PersistentCookiesPolicy.ForcePersistentCookies
+        )
 
         # Catch Escape even when the web browser has focus
         QApplication.instance().installEventFilter(self)
@@ -144,13 +162,16 @@ class TV(QMainWindow):
                 alignment=Qt.AlignmentFlag.AlignTop
             )
 
+        if apps:
+            self.home.findChildren(QPushButton)[0].setFocus()
+
     def open_app(self, app):
         name = app["name"]
 
         if name not in self.browsers:
             browser = QWebEngineView()
 
-            page = SinglePage(browser)
+            page = SinglePage(self.profile, browser)
             browser.setPage(page)
 
             browser_page = QWidget()
@@ -237,12 +258,24 @@ class TV(QMainWindow):
 
             # Escape always returns to the TV home screen
             if event.key() == Qt.Key.Key_Escape:
-
                 self.stack.setCurrentWidget(self.home)
-
                 return True
 
-        return super().eventFilter(watched, event)
+            # Enter activates the currently focused app
+            if (
+                event.key() in (
+                    Qt.Key.Key_Return,
+                    Qt.Key.Key_Enter,
+                )
+                and self.stack.currentWidget() == self.home
+            ):
+                focused = QApplication.focusWidget()
+
+                if isinstance(focused, QPushButton):
+                    focused.click()
+                    return True
+
+        return False
 
 
 if __name__ == "__main__":
