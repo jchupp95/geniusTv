@@ -1,20 +1,20 @@
 [[apps]]
 name = "YouTube"
 url = "https://www.youtube.com"
-image = "/home/me/geniusTv/images/youtube.png"
+image = "images/youtube.png"
 
 [[apps]]
 name = "Plex"
 url = "http://192.168.1.100:32400/web"
-image = "/home/me/geniusTv/images/plex.png"
+image = "images/plex.png"
 
 [[apps]]
 name = "Spotify"
 url = "https://open.spotify.com"
-image = "/home/me/geniusTv/images/spotify.png"
+image = "images/spotify.png"
 
 [[apps]]
 name = "Web"
 url = "https://start.duckduckgo.com/"
-image = "/home/me/geniusTv/images/web.jpeg"
+image = "images/web.jpeg"
 address_bar = true

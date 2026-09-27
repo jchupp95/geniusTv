@@ -3,7 +3,7 @@ import tomllib
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QUrl
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
@@ -17,9 +17,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWebEngineCore import QWebEnginePage
 
 
 CONFIG_FILE = Path("config.toml")
+
+
+class SinglePage(QWebEnginePage):
+    def createWindow(self, window_type):
+        return self
 
 
 class TV(QMainWindow):
@@ -50,62 +56,102 @@ class TV(QMainWindow):
         self.showFullScreen()
 
     def create_home_screen(self):
+        self.home.setStyleSheet("background-color: black; color: white;")
+
         layout = QGridLayout(self.home)
-        layout.setSpacing(30)
-        layout.setContentsMargins(50, 50, 50, 50)
+        layout.setSpacing(40)
+        layout.setContentsMargins(60, 60, 60, 60)
+        
 
         with open(CONFIG_FILE, "rb") as f:
             config = tomllib.load(f)
 
         apps = config.get("apps", [])
 
-        columns = 3
+        columns = 5
 
         for index, app in enumerate(apps):
             row = index // columns
             column = index % columns
 
+            # Container for icon + name
+            container = QWidget()
+            container_layout = QVBoxLayout(container)
+            container_layout.setContentsMargins(10, 10, 10, 10)
+            container_layout.setSpacing(10)
+
+            # Square app logo button
             button = QPushButton()
-            button.setMinimumSize(300, 220)
+            button.setFixedSize(160, 160)
+            button.setStyleSheet("""
+                QPushButton {
+                    border: none;
+                    border-radius: 0px;
+                    background: transparent;
+                }
 
-            button_layout = QVBoxLayout(button)
+                QPushButton:hover {
+                    background: rgba(255, 255, 255, 20);
+                }
 
-            # App image
-            image = QLabel()
+                QPushButton:focus {
+                    border: 4px solid white;
+                    background: rgba(255, 255, 255, 30);
+                }
+            """)
 
-            image_path = Path(app["image"])
+            image_path = CONFIG_FILE.parent / app["image"]
 
             if image_path.exists():
                 pixmap = QPixmap(str(image_path))
+
                 pixmap = pixmap.scaled(
-                    180,
-                    140,
+                    150,
+                    150,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
-                image.setPixmap(pixmap)
 
-            image.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            # App name
-            name = QLabel(app["name"])
-            name.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            name.setStyleSheet("font-size: 24px;")
-
-            button_layout.addWidget(image)
-            button_layout.addWidget(name)
+                # Put the image on the button
+                button.setIcon(QIcon(pixmap))
+                button.setIconSize(pixmap.size())
 
             button.clicked.connect(
                 lambda checked=False, app=app: self.open_app(app)
             )
 
-            layout.addWidget(button, row, column)
+            # App name
+            name = QLabel(app["name"])
+            name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            name.setStyleSheet("""
+                QLabel {
+                    color: white;
+                    font-size: 22px;
+                }
+            """)
+
+            container_layout.addWidget(
+                button,
+                alignment=Qt.AlignmentFlag.AlignHCenter
+            )
+
+            container_layout.addWidget(name)
+
+            layout.addWidget(
+                container,
+                row,
+                column,
+                alignment=Qt.AlignmentFlag.AlignTop
+            )
 
     def open_app(self, app):
         name = app["name"]
 
         if name not in self.browsers:
             browser = QWebEngineView()
+
+            page = SinglePage(browser)
+            browser.setPage(page)
 
             browser_page = QWidget()
             browser_layout = QVBoxLayout(browser_page)
