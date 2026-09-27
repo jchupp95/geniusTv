@@ -1,3 +1,4 @@
+import os
 import sys
 import tomllib
 from pathlib import Path
@@ -18,6 +19,8 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
+
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--force-dark-mode"
 
 
 CONFIG_FILE = Path("config.toml")
