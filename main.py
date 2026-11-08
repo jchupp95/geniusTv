@@ -185,14 +185,23 @@ class TV(QMainWindow):
 
             # Only create browser controls when requested
             if app.get("address_bar", False):
+                home_button = QPushButton("⌂")
                 back_button = QPushButton("←")
                 forward_button = QPushButton("→")
                 reload_button = QPushButton("⟳")
 
-                for button in (back_button, forward_button, reload_button):
+                for button in (
+                    home_button,
+                    back_button,
+                    forward_button,
+                    reload_button,
+                ):
                     button.setFixedSize(60, 50)
                     button.setStyleSheet("font-size: 28px;")
 
+                home_button.clicked.connect(
+                    lambda: browser.load(QUrl(app["url"]))
+                )
                 back_button.clicked.connect(browser.back)
                 forward_button.clicked.connect(browser.forward)
                 reload_button.clicked.connect(browser.reload)
@@ -234,6 +243,7 @@ class TV(QMainWindow):
                 toolbar.setSpacing(8)
                 toolbar.setContentsMargins(10, 10, 10, 10)
 
+                toolbar.addWidget(home_button)
                 toolbar.addWidget(back_button)
                 toolbar.addWidget(forward_button)
                 toolbar.addWidget(reload_button)
